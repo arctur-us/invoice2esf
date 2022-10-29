@@ -10,6 +10,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 import requests
 import sys
+from invoice import Income
 
 def readInvoice(pdf):
     output_string = StringIO()
@@ -75,27 +76,28 @@ def main():
         print("python3 main.py invoice.pdf ОЗП_ОПВ ОЗП_СО")
         print()
         return -1
+    i = Income()
     file = sys.argv[1]
     data = readInvoice(file)
     gross = getIncome( data )
-    invoice = getInvoice( data )
-    iDate = getiDate( data ) # invoice date
-    act = getAct( data )
-    aDate = getaDate( data ) # acceptance date
-    rate = getRate( datetime.strftime( iDate, '%d.%m.%Y' ) )
-    print("Invoice:", invoice, "from", iDate.strftime('%d.%m.%y'))
-    print("Act:", act, "for work completed on", datetime.strftime( aDate, '%d.%m.%y' ))
+    i.invoice_number = getInvoice( data )
+    i.invoice_date = getiDate( data ) # invoice date
+    i.contract = getAct( data )
+    i.delivery_date = getaDate( data ) # acceptance date
+    rate = getRate( datetime.strftime( i.invoice_date, '%d.%m.%Y' ) )
+    print("Invoice:", i.invoice_number, "from", i.invoice_date.strftime('%d.%m.%y'))
+    print("Act:", i.contract, "for work completed on", datetime.strftime( i.delivery_date, '%d.%m.%y' ))
     print("Income", gross, "USD")
-    print("Rate:", rate, "on", datetime.strftime( iDate, '%d.%m.%y' ))
-    kzt = round(rate*gross,2)
-    IPN = int(round(kzt*0.015,0))
+    print("Rate:", rate, "on", datetime.strftime( i.invoice_date, '%d.%m.%y' ))
+    i.price = round(rate*gross,2)
+    IPN = int(round(i.price*0.015,0))
     OZP_OPV = int(sys.argv[2]) # revisit
     OZP_SO = int(sys.argv[3])  # revisit
     SO = int(calcSO(OZP_OPV, OZP_SO))
-    SN = int(round(kzt*0.015-SO,0))
+    SN = int(round(i.price*0.015-SO,0))
     OPV = int(round(OZP_OPV*0.1,0))
     VOSMS = calcVOSMS()
-    print("KZT", kzt)
+    print("KZT", i.price)
     print("ИПН", IPN)
     print("CH", SN)
     print("ОПВ", OPV)
